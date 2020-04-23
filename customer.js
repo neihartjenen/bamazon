@@ -6,13 +6,13 @@ var connection = mysql.createConnection({
     host: "local host",
     port: 7000,
     user: "root",
-    password: "",
-    database: ""
+    password: "Biceps1309",
+    database: "bamazonDB"
 })
 
 function productItems() {
     connection.connect(function (err) {
-        connection.query("SELECT * FROM products", function (err, res) {
+        connection.query("SELECT * from products", function (err, res) {
             if (err) throw err
             else console.table(res, "\n")
             productID()
@@ -20,8 +20,6 @@ function productItems() {
     })
 
 }
-productItems()
-
 
 function productID() {
 
@@ -35,8 +33,20 @@ function productID() {
             }
             return false
         }
-    }]).then(function (answer) {
+    }])
+    .then(function (answer) {
         var userId = answer.id
-        console.log("Selected Item ID: ", userId)
+        console.log("Selected Product ID: ", userId)
         var userQuant = answer.quant
-        console.log("Selected Item Quantity from Inventory: ", userQuant, "\n")
+        console.log("Selected Product ", userQuant, "\n")
+        
+    connection.query("SELECT * from products ", [{
+            item_id: answer.id
+        }], function (err, res) {
+            if (err) throw err
+            console.table(res)
+            var currentStock = res[0].stockQuantity
+            console.log("Current Profuct in Stock: ", currentStock)
+            var price = res[0].price
+            var remainingStock = currentQuantity - answer.quant
+            console.log("Remaining Stock: ", remainingStock)
