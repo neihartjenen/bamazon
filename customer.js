@@ -1,74 +1,65 @@
-var mysql = require("mysql")
-var table = require("console.table")
-var inquirer = require("inquirer")
+var mysql = require("mysql");
+var inquirer = require("inquirer");
+require("console.table");
 
 var connection = mysql.createConnection({
-    host: "local host",
-    port: 7000,
+    host: "localhost",
+    port: 3306,
     user: "root",
-    password: "Biceps1309",
+    password: "password",
     database: "bamazonDB"
-})
+});
 
-function productItems() {
-    connection.connect(function (err) {
-        connection.query("SELECT * from products", function (err, res) {
-            if (err) throw err
-            else console.table(res, "\n")
-            productID()
-        })
-    })
+connection.connect(function(err){
+    if (err) throw err;
+    console.log("Connected as id " + connection.threadId);
+    showProducts();
+});
 
+
+function showProducts() {
+    connection.query("SELECT * FROM Products", function(err, res) {
+        if (err) throw err;
+        console.table(res);
+       askCustomer();
+    });
 }
-function productID() {
 
-    inquirer.prompt([{
+function askCustomer() {
+    // Selects alll data from MySQL table
+    connection.query("SELECT * FROM products", function(err, res) {
+      if (err) throw err;
+      console.table(res);
+  
+      askCustomer(res);
+    });
+  }
+
+  // Prompts customer for product ID
+function askCustomer(inventory) {
+    inquirer
+    .prompt([
+      {
         type: "input",
-        name: "id",
-        message: "Please enter the ID for the product you're looking for\n",
-        validate: function (value) {
-            if (!isNaN(value)) {
-                return true
-            }
-            return false
+        name: "choice",
+        message: "What is the item you would like to purchase? [Quit with Q]",
+        validate: function(val) {
+          return !isNaN(val) || val.toLowerCase() === "q";
         }
-    }])
-    .then(function (answer) {
-        var userId = answer.id
-        console.log("Selected Product ID: ", userId)
-        var userQuant = answer.quant
-        console.log("Selected Product ", userQuant, "\n")
-        
-    connection.query("SELECT * FROM products ", [{
-            item_id: answer.id
-        }], function (err, res) {
-            if (err) throw err
-            console.table(res)
-            var currentStock = res[0].stockQuantity
-            console.log("Current Product in Stock: ", currentStock)
-            var price = res[0].price
-            var remainingStock = currentQuantity - answer.quant
-            console.log("Remaining Stock: ", remainingStock)
-            
-        }
-    connection.query("UPDATE department_name SET ? WHERE ?", [
-            {TotalSales: deptRes[index].TotalSales + orderTotal},
-            {product_name: res[whatToBuy].product_name}
-        ], function (err, deptRes){
-            if (err) throw err;
-        })
-    })
-} else console.log("There isn't enoughof that item. Try again later.")}
+      }
+    ])
+    .then(function(val) {
+      checkIfShouldExit(val.choice);
+      var choiceId = parseInt(val.choice);
+      var product = checkInventory(choiceId, inventory);
 
-notEnoughPrompt
-         function notEnoughPrompt(){
-                inquirer.prompt([{
-                type: "confirm",
-                name: "reply",
-                message: "Do you want to add anything else?"
-                 }]).then(function(ans){
-                 if(ans.reply){
-                 start();
-                 } else{
-                console.log("See you Again!");
-           
+      if (product) {
+        askCustomerForQuantity(product);
+      }
+      else {
+        // Otherwise let them know the item is not in the inventory, re-run loadProducts
+        console.log("\nThat item is not in the inventory.");
+        loadProducts();
+      }
+    });
+}  
