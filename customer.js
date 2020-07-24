@@ -18,6 +18,7 @@ connection.connect(function(err){
 
 
 function showProducts() {
+    console.log("Items available for purchase: \n");
     connection.query("SELECT * FROM Products", function(err, res) {
         if (err) throw err;
         console.table(res);
@@ -26,40 +27,21 @@ function showProducts() {
 }
 
 function askCustomer() {
-    // Selects alll data from MySQL table
-    connection.query("SELECT * FROM products", function(err, res) {
-      if (err) throw err;
-      console.table(res);
-  
-      askCustomer(res);
-    });
-  }
+    inquirer.prompt([
+        {type: "number",
+        message: "What items do you want to purchase?",
+        name: "item"
+        },
+        {type: "number",
+        message: "How many?",
+        name: "quantity"
+        }        
+    ]) .then(function(response){
+        // checks DB for your item and verifies stock quantity
+        checkInventory(response);
+    })    
+}
 
-  // Prompts customer for product ID
-function askCustomer(inventory) {
-    inquirer
-    .prompt([
-      {
-        type: "input",
-        name: "choice",
-        message: "What is the item you would like to purchase? [Quit with Q]",
-        validate: function(val) {
-          return !isNaN(val) || val.toLowerCase() === "q";
-        }
-      }
-    ])
-    .then(function(val) {
-      checkIfShouldExit(val.choice);
-      var choiceId = parseInt(val.choice);
-      var product = checkInventory(choiceId, inventory);
-
-      if (product) {
-        askCustomerForQuantity(product);
-      }
-      else {
-        // Otherwise let them know the item is not in the inventory, re-run loadProducts
-        console.log("\nThat item is not in the inventory.");
-        loadProducts();
-      }
-    });
-}  
+function checkInventory(response) {
+    
+}
