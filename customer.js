@@ -43,5 +43,30 @@ function askCustomer() {
 }
 
 function checkInventory(response) {
-    
+    connection.query("SELECT * FROM Products WHERE item_id = " + response.item, function(err, res) {
+       
+        if(res[0].stock_quantity < response.quantity) {
+            console.log("Not Enough Inventory!");
+            showProducts()
+        }
+        else{
+            console.log("Order confirmed! Total Price: ", res[0].price * response.quantity);
+            var newQuantity = res[0].stock_quantity - response.quantity
+
+            connection.query(
+                "UPDATE products SET ? WHERE ?",
+                [
+                    { stock_quantity: newQuantity
+                },
+                {item_id: response.item}
+            ],
+            function(err, res) {
+                if (err) throw err;
+                console.log(res.affectedRows + " products updated!\n");
+                // Call deleteProduct after the update completes
+                showProducts();
+            }
+            );
+        }
+    })
 }
